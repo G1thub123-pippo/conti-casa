@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Conti Famiglia</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2d6a4f">
+<meta name="mobile-web-app-capable" content="true">
+<meta name="apple-mobile-web-app-capable" content="true">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Conti Famiglia">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f4f1;color:#1a2e22;min-height:100vh;overflow-x:hidden}
+:root{
+  --bg:#f0f4f1;
+  --bg2:#e4ede6;
+  --surface:#ffffff;
+  --surface2:#f7faf8;
+  --primary:#2d6a4f;
+  --primary-light:#52b788;
+  --primary-pale:#d8f3dc;
+  --accent:#f77f00;
+  --accent-pale:#fff3e0;
+  --text:#1a2e22;
+  --text2:#4a6355;
+  --muted:#8aab96;
+  --green:#2d9e5f;
+  --red:#e05252;
+  --green-pale:#e8f8ef;
+  --red-pale:#fdeaea;
+  --radius:14px;
+  --shadow:0 2px 12px rgba(45,106,79,.10);
+}
+
+/* APPBAR */
+#appbar{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:var(--primary);
+  color:#fff;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;
+  padding-top:calc(12px + env(safe-area-inset-top));
+  box-shadow:0 2px 8px rgba(45,106,79,.25);
+}
+#appbar-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+#appbar-emoji{font-size:22px;line-height:1}
+#appbar-title{font-size:16px;font-weight:700;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#appbar-ente{font-size:11px;color:rgba(255,255,255,.75);margin-top:1px}
+#appbar-right{display:flex;align-items:center;gap:10px}
+#syncDot{width:8px;height:8px;border-radius:50%;background:#666;transition:background .3s;flex-shrink:0}
+#btn-edit{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer}
+
+/* TABS */
+#tabs{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:#fff;
+  display:flex;
+  border-top:1px solid #d4e8da;
+  padding-bottom:env(safe-area-inset-bottom);
+  box-shadow:0 -2px 10px rgba(45,106,79,.08);
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:8px 4px;cursor:pointer;
+  color:var(--muted);font-size:10px;font-weight:600;gap:3px;
+  transition:color .2s;border:none;background:none;
+}
+.tab.active{color:var(--primary)}
+.tab-icon{font-size:20px;line-height:1}
+
+/* CONTENT */
+#content{
+  margin-top:calc(60px + env(safe-area-inset-top));
+  margin-bottom:calc(64px + env(safe-area-inset-bottom));
+  padding:14px;
+  min-height:100vh;
+}
+
+/* CHIP ENTE */
+.chip-bar{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
+.chip-bar::-webkit-scrollbar{display:none}
+.chip{
+  flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;
+  cursor:pointer;border:1.5px solid var(--primary);background:#fff;color:var(--primary);
+  transition:all .15s;
+}
+.chip.active{background:var(--primary);color:#fff}
+
+/* ANNO CHIP */
+.anno-chip-bar{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
+.anno-chip-bar::-webkit-scrollbar{display:none}
+.anno-chip{
+  flex-shrink:0;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;
+  cursor:pointer;border:1.5px solid var(--primary-light);background:#fff;color:var(--primary);
+}
+.anno-chip.active{background:var(--primary-light);color:#fff;border-color:var(--primary-light)}
+
+/* CARDS */
+.card{
+  background:var(--surface);border-radius:var(--radius);
+  box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden;
+}
+.card-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 14px 12px;cursor:pointer;
+}
+.card-head-left{flex:1;min-width:0}
+.card-nome{font-size:15px;font-weight:700;color:var(--text)}
+.card-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.card-saldo{font-size:16px;font-weight:800;text-align:right;flex-shrink:0;margin-left:10px}
+.card-saldo.pos{color:var(--green)}
+.card-saldo.neg{color:var(--red)}
+.card-actions{display:flex;gap:8px;padding:0 14px 12px}
+.btn-sm{
+  padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;
+  border:none;cursor:pointer;transition:opacity .15s;
+}
+.btn-sm:active{opacity:.7}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-ghost{background:var(--primary-pale);color:var(--primary)}
+.btn-danger{background:var(--red-pale);color:var(--red)}
+.btn-accent{background:var(--accent);color:#fff}
+
+/* VOCI */
+.voci-list{border-top:1px solid var(--bg2)}
+.voce-row{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  padding:10px 14px;border-bottom:1px solid var(--bg);
+}
+.voce-row:last-child{border-bottom:none}
+.voce-left{flex:1;min-width:0}
+.voce-cat{font-size:11px;font-weight:700;color:var(--primary-light);text-transform:uppercase;letter-spacing:.03em}
+.voce-desc{font-size:13px;color:var(--text);margin-top:1px}
+.voce-data{font-size:11px;color:var(--muted);margin-top:2px}
+.voce-right{display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:8px}
+.voce-imp{font-size:14px;font-weight:700}
+.voce-imp.pos{color:var(--green)}
+.voce-imp.neg{color:var(--red)}
+.voce-btn{background:none;border:none;font-size:15px;cursor:pointer;padding:2px 4px;color:var(--muted)}
+
+/* TOTALI BILANCIO */
+.totali-bar{
+  background:var(--primary);color:#fff;border-radius:var(--radius);
+  padding:16px;margin-bottom:14px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.totale-item{text-align:center;flex:1}
+.totale-label{font-size:10px;opacity:.75;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.totale-val{font-size:17px;font-weight:800;margin-top:3px}
+.totale-val.pos{color:#a7f3c8}
+.totale-val.neg{color:#fca5a5}
+.totale-val.saldo-pos{color:#fff}
+.totale-val.saldo-neg{color:#fca5a5}
+.totale-sep{width:1px;background:rgba(255,255,255,.2);align-self:stretch}
+
+/* FAB */
+#fab{
+  position:fixed;right:18px;
+  bottom:calc(72px + env(safe-area-inset-bottom));
+  width:52px;height:52px;border-radius:50%;
+  background:var(--accent);color:#fff;
+  font-size:26px;border:none;cursor:pointer;
+  box-shadow:0 4px 16px rgba(247,127,0,.45);
+  display:flex;align-items:center;justify-content:center;
+  z-index:99;transition:transform .15s;
+}
+#fab:active{transform:scale(.92)}
+
+/* MODAL */
+.modal-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.modal-bg.open{opacity:1;pointer-events:all}
+.modal{
+  background:#fff;border-radius:20px 20px 0 0;
+  padding:20px 18px;padding-bottom:calc(20px + env(safe-area-inset-bottom));
+  width:100%;max-width:540px;max-height:90vh;overflow-y:auto;
+  transform:translateY(100%);transition:transform .25s;
+}
+.modal-bg.open .modal{transform:translateY(0)}
+.modal-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:16px}
+.modal-close{float:right;background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);margin-top:-4px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px;display:block}
+.form-control{
+  width:100%;padding:11px 12px;border-radius:10px;
+  border:1.5px solid var(--bg2);background:var(--surface2);
+  font-size:14px;color:var(--text);outline:none;
+  transition:border-color .15s;font-family:inherit;
+}
+.form-control:focus{border-color:var(--primary)}
+.form-row{display:flex;gap:10px}
+.form-row .form-group{flex:1}
+.sign-toggle{display:flex;gap:8px;margin-bottom:14px}
+.sign-btn{
+  flex:1;padding:10px;border-radius:10px;border:2px solid var(--bg2);
+  font-size:13px;font-weight:700;cursor:pointer;background:#fff;
+  transition:all .15s;
+}
+.sign-btn.active-ent{border-color:var(--green);background:var(--green-pale);color:var(--green)}
+.sign-btn.active-usc{border-color:var(--red);background:var(--red-pale);color:var(--red)}
+.btn-full{
+  width:100%;padding:13px;border-radius:10px;
+  background:var(--primary);color:#fff;border:none;
+  font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;
+  transition:opacity .15s;
+}
+.btn-full:active{opacity:.8}
+.btn-full.danger{background:var(--red)}
+
+/* SEZIONE VUOTA */
+.empty{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.empty-text{font-size:15px;font-weight:600}
+.empty-sub{font-size:13px;margin-top:6px}
+
+/* CAT ITEM */
+.cat-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 14px;background:#fff;border-radius:10px;
+  margin-bottom:8px;box-shadow:var(--shadow);
+}
+.cat-nome{font-size:14px;font-weight:600}
+.cat-actions{display:flex;gap:6px}
+
+/* INTESTAZIONE EDIT */
+.ente-item{
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:8px;
+}
+.ente-item input{flex:1}
+.ente-item button{flex-shrink:0}
+
+/* TAG FONTE */
+.fonte-tag{font-size:10px;background:var(--primary-pale);color:var(--primary);border-radius:4px;padding:1px 5px;margin-left:4px;font-weight:600}
+
+/* BILANCIO CAT */
+.bil-cat{padding:8px 14px;background:var(--surface2);border-top:1px solid var(--bg2)}
+.bil-cat-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0}
+.bil-cat-nome{color:var(--text2)}
+.bil-cat-val{font-weight:600}
+
+/* CONDIVIDI */
+.condividi-btn{
+  display:flex;align-items:center;gap:8px;
+  width:100%;padding:12px 14px;border-radius:10px;
+  border:1.5px solid var(--bg2);background:#fff;
+  font-size:14px;font-weight:600;cursor:pointer;margin-bottom:8px;
+  color:var(--text);text-align:left;
+  transition:background .15s;
+}
+.condividi-btn:active{background:var(--bg2)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--bg2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- APPBAR -->
+<div id="appbar">
+  <div id="appbar-left">
+    <span id="appbar-emoji">🏠</span>
+    <div>
+      <div id="appbar-title">Conti Famiglia</div>
+      <div id="appbar-ente"></div>
+    </div>
+  </div>
+  <div id="appbar-right">
+    <div id="syncDot" title="Connessione"></div>
+    <button id="btn-edit" onclick="apriModaleImpostazioni()">✏️</button>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div id="content"></div>
+
+<!-- FAB -->
+<button id="fab" onclick="fabClick()" title="Aggiungi">+</button>
+
+<!-- TABS -->
+<div id="tabs">
+  <button class="tab active" id="tab-eventi" onclick="setTab('eventi')">
+    <span class="tab-icon">📋</span>Movimenti
+  </button>
+  <button class="tab" id="tab-bilancio" onclick="setTab('bilancio')">
+    <span class="tab-icon">📊</span>Bilancio
+  </button>
+  <button class="tab" id="tab-categorie" onclick="setTab('categorie')">
+    <span class="tab-icon">🏷️</span>Categorie
+  </button>
+</div>
+
+<!-- MODAL EVENTO -->
+<div class="modal-bg" id="modal-evento-bg" onclick="chiudiModaleEvento(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="chiudiModaleEvento()">×</button>
+    <div class="modal-title" id="modal-evento-title">Nuovo movimento</div>
+    <div class="form-group">
+      <label class="form-label">Nome</label>
+      <input class="form-control" id="ev-nome" placeholder="es. Spesa supermercato…">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Data</label>
+        <input class="form-control" id="ev-data" type="date">
+      </div>
+      <div class="form-group" id="ev-ente-group">
+        <label class="form-label">Membro</label>
+        <select class="form-control" id="ev-ente"></select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Note</label>
+      <input class="form-control" id="ev-note" placeholder="Opzionale…">
+    </div>
+    <button class="btn-full" onclick="salvaEvento()">Salva</button>
+    <button class="btn-full danger" id="btn-elimina-ev" style="margin-top:8px;display:none" onclick="eliminaEvento()">Elimina movimento</button>
+  </div>
+</div>
+
+<!-- MODAL VOCE -->
+<div class="modal-bg" id="modal-voce-bg" onclick="chiudiModaleVoce(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="chiudiModaleVoce()">×</button>
+    <div class="modal-title" id="modal-voce-title">Nuova voce</div>
+    <div class="sign-toggle">
+      <button class="sign-btn active-ent" id="sign-ent" onclick="setSegno(1)">＋ Entrata</button>
+      <button class="sign-btn" id="sign-usc" onclick="setSegno(-1)">－ Uscita</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Importo €</label>
+        <input class="form-control" id="v-importo" type="number" step="0.01" min="0" placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data</label>
+        <input class="form-control" id="v-data" type="date">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categoria</label>
+      <select class="form-control" id="v-cat"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrizione</label>
+      <input class="form-control" id="v-desc" placeholder="Dettaglio opzionale…">
+    </div>
+    <button class="btn-full" onclick="salvaVoce()">Salva voce</button>
+    <button class="btn-full danger" id="btn-elimina-v" style="margin-top:8px;display:none" onclick="eliminaVoce()">Elimina voce</button>
+  </div>
+</div>
+
+<!-- MODAL CATEGORIA -->
+<div class="modal-bg" id="modal-cat-bg" onclick="chiudiModaleCat(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="chiudiModaleCat()">×</button>
+    <div class="modal-title" id="modal-cat-title">Nuova categoria</div>
+    <div class="form-group">
+      <label class="form-label">Nome categoria</label>
+      <input class="form-control" id="cat-nome" placeholder="es. Alimentari…">
+    </div>
+    <button class="btn-full" onclick="salvaCat()">Salva</button>
+    <button class="btn-full danger" id="btn-elimina-cat" style="margin-top:8px;display:none" onclick="eliminaCat()">Elimina categoria</button>
+  </div>
+</div>
+
+<!-- MODAL IMPOSTAZIONI -->
+<div class="modal-bg" id="modal-imp-bg" onclick="chiudiModaleImp(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="chiudiModaleImp()">×</button>
+    <div class="modal-title">Impostazioni</div>
+    <div class="form-row">
+      <div class="form-group" style="flex:0 0 70px">
+        <label class="form-label">Emoji</label>
+        <input class="form-control" id="imp-emoji" maxlength="4" style="text-align:center;font-size:20px">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Titolo app</label>
+        <input class="form-control" id="imp-titolo">
+      </div>
+    </div>
+    <div class="form-label" style="margin-bottom:8px;margin-top:4px">Membri / Conti</div>
+    <div id="enti-list"></div>
+    <button class="btn-sm btn-ghost" onclick="addEnteField()" style="margin-bottom:14px">+ Aggiungi membro</button>
+    <button class="btn-full" onclick="salvaImpostazioni()">Salva impostazioni</button>
+    <div style="margin-top:16px;border-top:1px solid var(--bg2);padding-top:14px">
+      <div class="form-label" style="margin-bottom:8px">Dati</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-sm btn-ghost" onclick="esportaJSON()">📤 Esporta JSON</button>
+        <button class="btn-sm btn-ghost" onclick="importaJSON()">📥 Importa JSON</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONDIVIDI -->
+<div class="modal-bg" id="modal-condividi-bg" onclick="chiudiModaleCondividi(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="chiudiModaleCondividi()">×</button>
+    <div class="modal-title">Condividi resoconto</div>
+    <div id="condividi-body"></div>
+  </div>
+</div>
+
+<input type="file" id="file-import" accept=".json" style="display:none" onchange="leggiJSON(event)">
+
+<script>
+// ─── STATO ───────────────────────────────────────────────────
+let categorie    = ['Alimentari','Casa','Trasporti','Salute','Svago','Abbigliamento','Utenze','Altro'];
+let eventi       = [];
+let intestazione = ['Famiglia'];
+let titoloApp    = 'Conti Famiglia';
+let emojiApp     = '🏠';
+
+let tabCorrente  = 'eventi';
+let enteCorrente = 0; // indice intestazione
+let annoCorrente = new Date().getFullYear();
+let enteExpand   = {}; // evId -> bool
+let _editEvId    = null;
+let _editVoceEvId= null;
+let _editVoceId  = null;
+let _vSegno      = -1; // default uscita
+
+// ─── Firebase queue ──────────────────────────────────────────
+let _fbSalva = null;
+let _fbCoda  = null;
+window._getStato = ()=>({categorie, eventi, intestazione, titoloApp, emojiApp});
+window._fbPronto = (fn)=>{
+  _fbSalva = fn;
+  if(_fbCoda){ _fbSalva(window._getStato()); _fbCoda = null; }
+};
+window.applicaDati = (d)=>{
+  if(d.categorie)    categorie    = d.categorie;
+  if(d.eventi)       eventi       = d.eventi;
+  if(d.intestazione) intestazione = d.intestazione;
+  if(d.titoloApp)    titoloApp    = d.titoloApp;
+  if(d.emojiApp)     emojiApp     = d.emojiApp;
+  if(enteCorrente >= intestazione.length) enteCorrente = 0;
+  aggiornaTutto();
+};
+window.setSyncStatus = (s)=>{
+  const el = document.getElementById('syncDot');
+  if(!el) return;
+  const M={ok:'#52b788',saving:'#f0a800',err:'#e05252'};
+  el.style.background = M[s]||'#666';
+  el.title = {ok:'Sincronizzato',saving:'Salvataggio…',err:'Offline'}[s]||'';
+};
+
+// ─── LOCALE ──────────────────────────────────────────────────
+function salvaLocale(){
+  try{
+    localStorage.setItem('cf_cat', JSON.stringify(categorie));
+    localStorage.setItem('cf_eventi', JSON.stringify(eventi));
+    localStorage.setItem('cf_intestazione', JSON.stringify(intestazione));
+    localStorage.setItem('cf_titolo', titoloApp);
+    localStorage.setItem('cf_emoji', emojiApp);
+    localStorage.setItem('cf_lastSave', new Date().toISOString());
+  }catch(e){}
+}
+function caricaLocale(){
+  try{
+    const c=localStorage.getItem('cf_cat'); if(c) categorie=JSON.parse(c);
+    const ev=localStorage.getItem('cf_eventi'); if(ev) eventi=JSON.parse(ev);
+    const in_=localStorage.getItem('cf_intestazione'); if(in_) intestazione=JSON.parse(in_);
+    const t=localStorage.getItem('cf_titolo'); if(t) titoloApp=t;
+    const e=localStorage.getItem('cf_emoji'); if(e) emojiApp=e;
+  }catch(e){}
+}
+
+// ─── OPFS ────────────────────────────────────────────────────
+async function saveOPFS(){
+  try{
+    const root=await navigator.storage.getDirectory();
+    const fh=await root.getFileHandle('cf_backup.json',{create:true});
+    const w=await fh.createWritable();
+    await w.write(JSON.stringify({categorie,eventi,intestazione,titoloApp,emojiApp,savedAt:new Date().toISOString()}));
+    await w.close();
+  }catch{}
+}
+
+// ─── SALVA ───────────────────────────────────────────────────
+function salva(){
+  salvaLocale();
+  saveOPFS();
+  const stato=window._getStato();
+  if(_fbSalva){ _fbSalva(stato); }
+  else{ _fbCoda=stato; }
+}
+
+// ─── NUOVA ID ────────────────────────────────────────────────
+function nextId(arr){ return arr.length ? Math.max(...arr.map(x=>x.id||0))+1 : 1; }
+
+// ─── TABS ────────────────────────────────────────────────────
+function setTab(t){
+  tabCorrente=t;
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  renderTab();
+}
+
+// ─── RENDER PRINCIPALE ───────────────────────────────────────
+function aggiornaTutto(){
+  renderAppbar();
+  renderTab();
+}
+function renderAppbar(){
+  document.getElementById('appbar-emoji').textContent=emojiApp;
+  document.getElementById('appbar-title').textContent=titoloApp;
+  const ente=intestazione[enteCorrente]||'';
+  document.getElementById('appbar-ente').textContent= intestazione.length>1 ? ente : '';
+}
+function renderTab(){
+  if(tabCorrente==='eventi')     renderEventi();
+  else if(tabCorrente==='bilancio') renderBilancio();
+  else                           renderCategorie();
+}
+
+// ─── EVENTI ──────────────────────────────────────────────────
+function renderEventi(){
+  const c=document.getElementById('content');
+  let h='';
+  // chip enti
+  if(intestazione.length>1){
+    h+='<div class="chip-bar">';
+    intestazione.forEach((e,i)=>{
+      h+=`<button class="chip${i===enteCorrente?' active':''}" onclick="setEnte(${i})">${e}</button>`;
+    });
+    h+='</div>';
+  }
+  // eventi filtrati
+  const filtrati=eventi.filter(ev=>!ev.ente||ev.ente===intestazione[enteCorrente]||intestazione.length===1);
+  const sorted=[...filtrati].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  if(!sorted.length){
+    h+=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Nessun movimento</div><div class="empty-sub">Tocca + per aggiungere</div></div>`;
+  } else {
+    sorted.forEach(ev=>{
+      const saldo=(ev.voci||[]).reduce((s,v)=>s+(v.importo||0),0);
+      const sPos=saldo>=0;
+      const exp=!!enteExpand[ev.id];
+      h+=`<div class="card">
+        <div class="card-head" onclick="toggleExpand(${ev.id})">
+          <div class="card-head-left">
+            <div class="card-nome">${ev.nome||'Senza nome'}</div>
+            <div class="card-sub">${fmtData(ev.data)}${intestazione.length>1&&ev.ente?` · ${ev.ente}`:''}</div>
+          </div>
+          <div class="card-saldo ${sPos?'pos':'neg'}">${fmtImporto(saldo)}</div>
+        </div>
+        <div class="card-actions">
+          <button class="btn-sm btn-ghost" onclick="apriModaleEvento(${ev.id})">✏️ Modifica</button>
+          <button class="btn-sm btn-primary" onclick="apriModaleVoce(${ev.id})">+ Voce</button>
+        </div>`;
+      if(exp && (ev.voci||[]).length){
+        h+='<div class="voci-list">';
+        ev.voci.forEach(v=>{
+          const pos=v.importo>=0;
+          h+=`<div class="voce-row">
+            <div class="voce-left">
+              <div class="voce-cat">${v.cat||''}</div>
+              <div class="voce-desc">${v.desc||'—'}</div>
+              <div class="voce-data">${fmtData(v.data)}</div>
+            </div>
+            <div class="voce-right">
+              <span class="voce-imp ${pos?'pos':'neg'}">${fmtImporto(v.importo)}</span>
+              <button class="voce-btn" onclick="apriModaleVoceEdit(${ev.id},${v.id})">✏️</button>
+            </div>
+          </div>`;
+        });
+        h+='</div>';
+      } else if(exp){
+        h+=`<div class="voci-list"><div style="padding:12px 14px;color:var(--muted);font-size:13px">Nessuna voce</div></div>`;
+      }
+      h+='</div>';
+    });
+  }
+  document.getElementById('fab').style.display='flex';
+  c.innerHTML=h;
+}
+
+function toggleExpand(id){
+  enteExpand[id]=!enteExpand[id];
+  renderEventi();
+}
+
+function setEnte(i){
+  enteCorrente=i;
+  renderAppbar();
+  renderTab();
+}
+
+// ─── BILANCIO ────────────────────────────────────────────────
+function renderBilancio(){
+  const c=document.getElementById('content');
+  document.getElementById('fab').style.display='none';
+  let h='';
+  // chip enti
+  if(intestazione.length>1){
+    h+='<div class="chip-bar">';
+    intestazione.forEach((e,i)=>{
+      h+=`<button class="chip${i===enteCorrente?' active':''}" onclick="setEnteB(${i})">${e}</button>`;
+    });
+    h+='</div>';
+  }
+  // anni disponibili
+  const ente=intestazione[enteCorrente]||'';
+  const evFiltrati=eventi.filter(ev=>!ev.ente||ev.ente===ente||intestazione.length===1);
+  const anni=[...new Set(evFiltrati.map(ev=>(ev.data||'').slice(0,4)).filter(Boolean))].sort().reverse();
+  if(!anni.includes(String(annoCorrente)) && anni.length) annoCorrente=parseInt(anni[0]);
+  h+='<div class="anno-chip-bar">';
+  anni.forEach(a=>{
+    h+=`<button class="anno-chip${parseInt(a)===annoCorrente?' active':''}" onclick="setAnno(${a})">${a}</button>`;
+  });
+  h+='</div>';
+  // eventi anno
+  const evAnno=evFiltrati.filter(ev=>(ev.data||'').startsWith(String(annoCorrente)));
+  let totEnt=0,totUsc=0;
+  evAnno.forEach(ev=>(ev.voci||[]).forEach(v=>{ if(v.importo>=0) totEnt+=v.importo; else totUsc+=v.importo; }));
+  const saldo=totEnt+totUsc;
+  h+=`<div class="totali-bar">
+    <div class="totale-item"><div class="totale-label">Entrate</div><div class="totale-val pos">+${fmtN(totEnt)}</div></div>
+    <div class="totale-sep"></div>
+    <div class="totale-item"><div class="totale-label">Uscite</div><div class="totale-val neg">${fmtN(totUsc)}</div></div>
+    <div class="totale-sep"></div>
+    <div class="totale-item"><div class="totale-label">Saldo</div><div class="totale-val ${saldo>=0?'saldo-pos':'saldo-neg'}">${fmtN(saldo)}</div></div>
+  </div>`;
+  // btn condividi
+  h+=`<button class="condividi-btn" onclick="apriCondividi()">📤 Condividi resoconto ${annoCorrente}</button>`;
+  // lista eventi
+  if(!evAnno.length){
+    h+=`<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">Nessun movimento ${annoCorrente}</div></div>`;
+  } else {
+    const sorted=[...evAnno].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+    sorted.forEach(ev=>{
+      const voci=ev.voci||[];
+      const sEv=voci.reduce((s,v)=>s+(v.importo||0),0);
+      const exp=!!enteExpand['b'+ev.id];
+      // categorie aggregate
+      const catMap={};
+      voci.forEach(v=>{ catMap[v.cat||'Altro']=(catMap[v.cat||'Altro']||0)+(v.importo||0); });
+      h+=`<div class="card">
+        <div class="card-head" onclick="toggleExpandB(${ev.id})">
+          <div class="card-head-left">
+            <div class="card-nome">${ev.nome||'Senza nome'}</div>
+            <div class="card-sub">${fmtData(ev.data)}</div>
+          </div>
+          <div class="card-saldo ${sEv>=0?'pos':'neg'}">${fmtImporto(sEv)}</div>
+        </div>`;
+      if(exp){
+        h+='<div class="bil-cat">';
+        Object.entries(catMap).forEach(([cat,val])=>{
+          h+=`<div class="bil-cat-row"><span class="bil-cat-nome">${cat}</span><span class="bil-cat-val ${val>=0?'pos':'neg'}" style="color:${val>=0?'var(--green)':'var(--red)'}">${fmtImporto(val)}</span></div>`;
+        });
+        // voci dettaglio
+        voci.forEach(v=>{
+          h+=`<div class="bil-cat-row" style="padding-left:12px"><span class="bil-cat-nome" style="font-size:12px">${v.desc||v.cat||'—'}</span><span class="bil-cat-val" style="font-size:12px;color:${v.importo>=0?'var(--green)':'var(--red)'}">${fmtImporto(v.importo)}</span></div>`;
+        });
+        h+='</div>';
+      }
+      h+='</div>';
+    });
+  }
+  c.innerHTML=h;
+}
+
+function setEnteB(i){ enteCorrente=i; renderAppbar(); renderBilancio(); }
+function setAnno(a){ annoCorrente=parseInt(a); renderBilancio(); }
+function toggleExpandB(id){ enteExpand['b'+id]=!enteExpand['b'+id]; renderBilancio(); }
+
+// ─── CATEGORIE ───────────────────────────────────────────────
+function renderCategorie(){
+  const c=document.getElementById('content');
+  document.getElementById('fab').style.display='flex';
+  let h='';
+  categorie.forEach((cat,i)=>{
+    h+=`<div class="cat-item">
+      <span class="cat-nome">${cat}</span>
+      <div class="cat-actions">
+        <button class="btn-sm btn-ghost" onclick="apriModaleCat(${i})">✏️</button>
+        <button class="btn-sm btn-danger" onclick="eliminaCatDiretto(${i})">🗑️</button>
+      </div>
+    </div>`;
+  });
+  if(!categorie.length) h=`<div class="empty"><div class="empty-icon">🏷️</div><div class="empty-text">Nessuna categoria</div></div>`;
+  c.innerHTML=h;
+}
+
+// ─── MODAL EVENTO ────────────────────────────────────────────
+function fabClick(){
+  if(tabCorrente==='eventi') apriModaleEvento(null);
+  else if(tabCorrente==='categorie') apriModaleCat(null);
+}
+function apriModaleEvento(id){
+  _editEvId=id;
+  const ev=id!=null ? eventi.find(e=>e.id===id) : null;
+  document.getElementById('modal-evento-title').textContent=ev?'Modifica movimento':'Nuovo movimento';
+  document.getElementById('ev-nome').value=ev?ev.nome:'';
+  document.getElementById('ev-data').value=ev?ev.data:oggi();
+  document.getElementById('ev-note').value=ev?ev.note:'';
+  // ente select
+  const sel=document.getElementById('ev-ente');
+  sel.innerHTML=intestazione.map((e,i)=>`<option value="${e}"${ev&&ev.ente===e?' selected':''}>${e}</option>`).join('');
+  if(!ev) sel.value=intestazione[enteCorrente]||intestazione[0]||'';
+  document.getElementById('ev-ente-group').style.display=intestazione.length>1?'':'none';
+  document.getElementById('btn-elimina-ev').style.display=ev?'block':'none';
+  apriModal('modal-evento-bg');
+}
+function chiudiModaleEvento(e){ if(!e||e.target.id==='modal-evento-bg') chiudiModal('modal-evento-bg'); }
+function salvaEvento(){
+  const nome=document.getElementById('ev-nome').value.trim();
+  if(!nome) return alert('Inserisci un nome');
+  const data=document.getElementById('ev-data').value||oggi();
+  const ente=document.getElementById('ev-ente').value||intestazione[0]||'';
+  const note=document.getElementById('ev-note').value.trim();
+  if(_editEvId!=null){
+    const ev=eventi.find(e=>e.id===_editEvId);
+    if(ev){ ev.nome=nome; ev.data=data; ev.ente=ente; ev.note=note; }
+  } else {
+    eventi.push({id:nextId(eventi),nome,data,ente,note,voci:[]});
+  }
+  salva(); chiudiModal('modal-evento-bg'); renderTab();
+}
+function eliminaEvento(){
+  if(!confirm('Eliminare questo movimento con tutte le voci?')) return;
+  eventi=eventi.filter(e=>e.id!==_editEvId);
+  salva(); chiudiModal('modal-evento-bg'); renderTab();
+}
+
+// ─── MODAL VOCE ──────────────────────────────────────────────
+function apriModaleVoce(evId){
+  _editVoceEvId=evId; _editVoceId=null;
+  document.getElementById('modal-voce-title').textContent='Nuova voce';
+  document.getElementById('v-importo').value='';
+  document.getElementById('v-data').value=oggi();
+  document.getElementById('v-desc').value='';
+  document.getElementById('btn-elimina-v').style.display='none';
+  setSegno(-1);
+  riempiCatSelect();
+  apriModal('modal-voce-bg');
+}
+function apriModaleVoceEdit(evId,vId){
+  _editVoceEvId=evId; _editVoceId=vId;
+  const ev=eventi.find(e=>e.id===evId);
+  const v=ev?(ev.voci||[]).find(x=>x.id===vId):null;
+  if(!v) return;
+  document.getElementById('modal-voce-title').textContent='Modifica voce';
+  document.getElementById('v-importo').value=Math.abs(v.importo);
+  document.getElementById('v-data').value=v.data||oggi();
+  document.getElementById('v-desc').value=v.desc||'';
+  document.getElementById('btn-elimina-v').style.display='block';
+  setSegno(v.importo>=0?1:-1);
+  riempiCatSelect(v.cat);
+  apriModal('modal-voce-bg');
+}
+function riempiCatSelect(sel){
+  const el=document.getElementById('v-cat');
+  el.innerHTML=categorie.map(c=>`<option${c===sel?' selected':''}>${c}</option>`).join('');
+}
+function setSegno(s){
+  _vSegno=s;
+  const be=document.getElementById('sign-ent');
+  const bu=document.getElementById('sign-usc');
+  be.className='sign-btn'+(s===1?' active-ent':'');
+  bu.className='sign-btn'+(s===-1?' active-usc':'');
+}
+function chiudiModaleVoce(e){ if(!e||e.target.id==='modal-voce-bg') chiudiModal('modal-voce-bg'); }
+function salvaVoce(){
+  const imp=parseFloat(document.getElementById('v-importo').value);
+  if(isNaN(imp)||imp<=0) return alert('Inserisci un importo valido');
+  const cat=document.getElementById('v-cat').value||categorie[0]||'';
+  const desc=document.getElementById('v-desc').value.trim();
+  const data=document.getElementById('v-data').value||oggi();
+  const importo=_vSegno*imp;
+  const ev=eventi.find(e=>e.id===_editVoceEvId);
+  if(!ev) return;
+  if(_editVoceId!=null){
+    const v=(ev.voci||[]).find(x=>x.id===_editVoceId);
+    if(v){ v.importo=importo; v.cat=cat; v.desc=desc; v.data=data; }
+  } else {
+    if(!ev.voci) ev.voci=[];
+    ev.voci.push({id:nextId(ev.voci),cat,desc,importo,data,fonte:'manuale'});
+  }
+  salva(); chiudiModal('modal-voce-bg'); renderTab();
+}
+function eliminaVoce(){
+  const ev=eventi.find(e=>e.id===_editVoceEvId);
+  if(!ev) return;
+  ev.voci=(ev.voci||[]).filter(v=>v.id!==_editVoceId);
+  salva(); chiudiModal('modal-voce-bg'); renderTab();
+}
+
+// ─── MODAL CATEGORIA ─────────────────────────────────────────
+let _editCatIdx=null;
+function apriModaleCat(idx){
+  _editCatIdx=idx;
+  const isEdit=idx!=null;
+  document.getElementById('modal-cat-title').textContent=isEdit?'Modifica categoria':'Nuova categoria';
+  document.getElementById('cat-nome').value=isEdit?categorie[idx]:'';
+  document.getElementById('btn-elimina-cat').style.display=isEdit?'block':'none';
+  apriModal('modal-cat-bg');
+}
+function chiudiModaleCat(e){ if(!e||e.target.id==='modal-cat-bg') chiudiModal('modal-cat-bg'); }
+function salvaCat(){
+  const nome=document.getElementById('cat-nome').value.trim();
+  if(!nome) return alert('Inserisci un nome');
+  if(_editCatIdx!=null){
+    const old=categorie[_editCatIdx];
+    categorie[_editCatIdx]=nome;
+    eventi.forEach(ev=>(ev.voci||[]).forEach(v=>{ if(v.cat===old) v.cat=nome; }));
+  } else {
+    categorie.push(nome);
+  }
+  salva(); chiudiModal('modal-cat-bg'); renderCategorie();
+}
+function eliminaCat(){
+  categorie.splice(_editCatIdx,1);
+  salva(); chiudiModal('modal-cat-bg'); renderCategorie();
+}
+function eliminaCatDiretto(i){
+  _editCatIdx=i;
+  eliminaCat();
+}
+
+// ─── MODAL IMPOSTAZIONI ──────────────────────────────────────
+function apriModaleImpostazioni(){
+  document.getElementById('imp-emoji').value=emojiApp;
+  document.getElementById('imp-titolo').value=titoloApp;
+  renderEntiList();
+  apriModal('modal-imp-bg');
+}
+function chiudiModaleImp(e){ if(!e||e.target.id==='modal-imp-bg') chiudiModal('modal-imp-bg'); }
+function renderEntiList(){
+  const el=document.getElementById('enti-list');
+  el.innerHTML=intestazione.map((e,i)=>`
+    <div class="ente-item">
+      <input class="form-control" value="${e}" id="ente-field-${i}" placeholder="Nome membro…">
+      <button class="btn-sm btn-danger" onclick="removeEnteField(${i})">✕</button>
+    </div>`).join('');
+}
+function addEnteField(){
+  intestazione.push('');
+  renderEntiList();
+}
+function removeEnteField(i){
+  intestazione.splice(i,1);
+  if(enteCorrente>=intestazione.length) enteCorrente=0;
+  renderEntiList();
+}
+function salvaImpostazioni(){
+  emojiApp=document.getElementById('imp-emoji').value.trim()||'🏠';
+  titoloApp=document.getElementById('imp-titolo').value.trim()||'Conti Famiglia';
+  const nuovi=intestazione.map((_,i)=>{
+    const el=document.getElementById('ente-field-'+i);
+    return el?el.value.trim():'';
+  }).filter(Boolean);
+  intestazione=nuovi.length?nuovi:['Famiglia'];
+  if(enteCorrente>=intestazione.length) enteCorrente=0;
+  salva(); chiudiModal('modal-imp-bg'); aggiornaTutto();
+}
+
+// ─── MODAL CONDIVIDI ─────────────────────────────────────────
+function apriCondividi(){
+  const ente=intestazione[enteCorrente]||'';
+  const evAnno=eventi.filter(ev=>
+    ((!ev.ente||ev.ente===ente||intestazione.length===1)) &&
+    (ev.data||'').startsWith(String(annoCorrente))
+  );
+  let totEnt=0,totUsc=0;
+  evAnno.forEach(ev=>(ev.voci||[]).forEach(v=>{ if(v.importo>=0) totEnt+=v.importo; else totUsc+=v.importo; }));
+  document.getElementById('condividi-body').innerHTML=`
+    <button class="condividi-btn" onclick="condividiTesto('riepilogo')">📋 Riepilogo ${annoCorrente}</button>
+    <button class="condividi-btn" onclick="condividiTesto('dettaglio')">📄 Dettaglio ${annoCorrente}</button>`;
+  apriModal('modal-condividi-bg');
+}
+function chiudiModaleCondividi(e){ if(!e||e.target.id==='modal-condividi-bg') chiudiModal('modal-condividi-bg'); }
+function condividiTesto(tipo){
+  const ente=intestazione[enteCorrente]||intestazione[0]||'Famiglia';
+  const evAnno=eventi.filter(ev=>
+    ((!ev.ente||ev.ente===ente||intestazione.length===1)) &&
+    (ev.data||'').startsWith(String(annoCorrente))
+  ).sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+  let txt=`${emojiApp} ${titoloApp}\n`;
+  if(intestazione.length>1) txt+=`👤 ${ente}\n`;
+  txt+=`📅 Anno ${annoCorrente}\n\n`;
+  let totEnt=0,totUsc=0;
+  evAnno.forEach(ev=>{
+    const voci=ev.voci||[];
+    const saldo=voci.reduce((s,v)=>s+(v.importo||0),0);
+    txt+=`▸ ${ev.nome||'—'} (${fmtData(ev.data)}): ${fmtImporto(saldo)}\n`;
+    if(tipo==='dettaglio'){
+      voci.forEach(v=>{ txt+=`   · ${v.cat||''} – ${v.desc||'—'}: ${fmtImporto(v.importo)}\n`; });
+    }
+    voci.forEach(v=>{ if(v.importo>=0) totEnt+=v.importo; else totUsc+=v.importo; });
+  });
+  txt+=`\n📈 Entrate: +${fmtN(totEnt)}\n📉 Uscite: ${fmtN(totUsc)}\n💰 Saldo: ${fmtN(totEnt+totUsc)}`;
+  if(navigator.share){ navigator.share({title:`${titoloApp} ${annoCorrente}`,text:txt}); }
+  else{ navigator.clipboard.writeText(txt).then(()=>alert('Testo copiato!')); }
+}
+
+// ─── EXPORT / IMPORT ─────────────────────────────────────────
+function esportaJSON(){
+  const data=JSON.stringify({categorie,eventi,intestazione,titoloApp,emojiApp,esportatoIl:new Date().toISOString()},null,2);
+  const a=document.createElement('a');
+  a.href='data:application/json,'+encodeURIComponent(data);
+  a.download=`conti_famiglia_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+function importaJSON(){ document.getElementById('file-import').click(); }
+function leggiJSON(e){
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(d.eventi) eventi=d.eventi;
+      if(d.categorie) categorie=d.categorie;
+      if(d.intestazione) intestazione=d.intestazione;
+      if(d.titoloApp) titoloApp=d.titoloApp;
+      if(d.emojiApp) emojiApp=d.emojiApp;
+      salva(); chiudiModal('modal-imp-bg'); aggiornaTutto();
+    }catch{ alert('File non valido'); }
+  };
+  r.readAsText(file);
+  e.target.value='';
+}
+
+// ─── UTILS ───────────────────────────────────────────────────
+function apriModal(id){ document.getElementById(id).classList.add('open'); }
+function chiudiModal(id){ document.getElementById(id).classList.remove('open'); }
+function oggi(){ return new Date().toISOString().slice(0,10); }
+function fmtData(d){
+  if(!d) return '—';
+  const [y,m,g]=d.split('-');
+  return `${g}/${m}/${y}`;
+}
+function fmtN(n){ return (Math.abs(n)).toFixed(2).replace('.',',')+'€'; }
+function fmtImporto(n){
+  if(n==null) return '—';
+  return (n>=0?'+':'-')+fmtN(n);
+}
+
+// ─── AVVIO ───────────────────────────────────────────────────
+caricaLocale();
+aggiornaTutto();
+</script>
+
+<script type="module">
+// ─── FIREBASE ────────────────────────────────────────────────
+import { initializeApp }          from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js';
+import { getFirestore, doc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyD44NW4GAqepOvB_XfNKWzaTxrOt3spyRc",
+  authDomain:        "bilancio-casa-981f2.firebaseapp.com",
+  projectId:         "bilancio-casa-981f2",
+  storageBucket:     "bilancio-casa-981f2.firebasestorage.app",
+  messagingSenderId: "960581445744",
+  appId:             "1:960581445744:web:04ca0e66261bed31e52cb5"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+const DOC = doc(db, 'conti-famiglia', 'dati');
+
+let _primoSnap = true;
+let _mioUltimoTs = '';
+
+const fbSalva = async (dati) => {
+  try {
+    window.setSyncStatus('saving');
+    const ts = new Date().toISOString();
+    await setDoc(DOC, { ...dati, aggiornatoIl: ts });
+    _mioUltimoTs = ts;
+    localStorage.setItem('cf_lastSave', ts);
+    window.setSyncStatus('ok');
+  } catch(e) {
+    window.setSyncStatus('err');
+  }
+};
+
+window._fbPronto(fbSalva);
+
+onSnapshot(DOC, snap => {
+  if (!snap.exists()) {
+    fbSalva(window._getStato());
+    _primoSnap = false;
+    return;
+  }
+  const d = snap.data();
+  const remoto = d.aggiornatoIl || '';
+
+  if (_primoSnap) {
+    _primoSnap = false;
+    const localeTs = localStorage.getItem('cf_lastSave') || '';
+    if (remoto >= localeTs) {
+      _mioUltimoTs = remoto;
+      localStorage.setItem('cf_lastSave', remoto);
+      window.applicaDati(d);
+      window.setSyncStatus('ok');
+    } else {
+      fbSalva(window._getStato());
+    }
+    return;
+  }
+
+  if (remoto !== _mioUltimoTs) {
+    _mioUltimoTs = remoto;
+    window.applicaDati(d);
+    window.setSyncStatus('ok');
+  }
+}, () => window.setSyncStatus('err'));
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
